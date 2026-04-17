@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podcast: mitos de la radiactividad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        trackBg: '#1e1e24',
+                        logicDark: '#2d2d34',
+                        p1_sfx: '#64748b',   // Pista 1: SFX/música (Gris)
+                        p2_xanti: '#3b82f6', // Pista 2: Xanti (Azul)
+                        p3_leo: '#f59e0b',   // Pista 3: Leo (Naranja)
+                        p4_ia: '#10b981'     // Pista 4: IA/datos (Verde)
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #121212; color: #e5e5e5; }
+        
+        /* Contenedor del timeline */
+        .timeline-container {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 2px;
+            background-color: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        }
+
+        /* Cabeceras de pista */
+        .track-header {
+            background-color: #25252b;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-right: 2px solid #111;
+            position: relative;
+            z-index: 20;
+        }
+        
+        .track-header::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 4px; }
+        .track-header.sfx::after { background-color: #64748b; }
+        .track-header.xanti::after { background-color: #3b82f6; }
+        .track-header.leo::after { background-color: #f59e0b; }
+        .track-header.ia::after { background-color: #10b981; }
+
+        /* Área de clips */
+        .track-lane {
+            background-color: #1e1e24;
+            position: relative;
+            min-height: 120px;
+            padding: 10px 0;
+            background-image: linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 150px 100%;
+        }
+
+        /* Regla de tiempo superior */
+        .time-ruler {
+            grid-column: 2;
+            height: 30px;
+            background-color: #2d2d34;
+            display: flex;
+            align-items: flex-end;
+            position: relative;
+            background-image: linear-gradient(90deg, #555 1px, transparent 1px);
+            background-size: 150px 100%;
+        }
+        .time-mark { position: absolute; font-size: 10px; color: #888; bottom: 2px; }
+
+        /* Clips de audio (bloques de texto) */
+        .clip {
+            position: absolute;
+            top: 10px;
+            height: 100px;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2), 0 4px 6px rgba(0,0,0,0.3);
+            overflow: hidden; 
+            transition: all 0.2s ease-in-out;
+            cursor: default;
+            z-index: 10;
+        }
+        
+        /* Efecto lupa al pasar el ratón */
+        .clip:hover {
+            height: max-content; 
+            min-height: 100px;
+            min-width: 280px; 
+            z-index: 50; 
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4), 0 15px 30px rgba(0,0,0,0.9);
+            padding-bottom: 15px;
+        }
+
+        .clip-header {
+            font-size: 10px; font-weight: bold;
+            letter-spacing: 0.5px; margin-bottom: 4px; opacity: 0.8;
+            display: flex; justify-content: space-between;
+        }
+
+        /* Colores de los clips */
+        .clip.sfx { background: linear-gradient(180deg, #475569, #334155); color: #f1f5f9; }
+        .clip.xanti { background: linear-gradient(180deg, #3b82f6, #2563eb); color: white; }
+        .clip.leo { background: linear-gradient(180deg, #f59e0b, #d97706); color: white; }
+        .clip.ia { background: linear-gradient(180deg, #10b981, #059669); color: white; }
+        
+        /* Cebra para pistas impares */
+        .track-lane:nth-child(even), .track-header:nth-child(even) { background-color: rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="p-8">
+
+    <!-- CABECERA -->
+    <div class="max-w-6xl mx-auto mb-6 bg-logicDark p-8 rounded-2xl border border-gray-700 shadow-2xl flex items-center justify-between">
+        <div class="flex items-center gap-6">
+            <div class="w-24 h-24 bg-gradient-to-br from-green-400 to-blue-600 rounded-xl flex items-center justify-center text-4xl shadow-lg border border-gray-600">
+                ☢️
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-white tracking-tight">Podcast: mitos de la radiactividad</h1>
+                <p class="text-gray-400 mt-1">Flipped learning - Física y Química | Prof. Xanti</p>
+                <div class="flex items-center gap-3 mt-3 text-sm font-semibold">
+                    <span class="bg-gray-800 px-3 py-1 rounded text-gray-300"><i class="fa-solid fa-microphone mr-1"></i> Guion multipista</span>
+                    <span class="bg-gray-800 px-3 py-1 rounded text-gray-300"><i class="fa-regular fa-clock mr-1"></i> Duración: ~3:55</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-3 items-end w-1/3">
+            <button onclick="toggleView()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-2 px-6 rounded-lg shadow-lg flex items-center gap-2 transition w-full justify-center">
+                <i class="fa-solid fa-book-open"></i> Alternar modo lectura / edición
+            </button>
+            
+            <div class="bg-black/40 p-3 rounded-xl border border-gray-600/50 w-full">
+                <div class="text-[10px] text-gray-400 font-bold mb-1 tracking-wider"><i class="fa-solid fa-play mr-1"></i> Audio final</div>
+                <audio controls class="w-full h-8 outline-none">
+                    <source src="tu_audio_final.mp3" type="audio/mpeg">
+                </audio>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENSAJE PARA ALUMNOS -->
+    <div id="instructions" class="max-w-6xl mx-auto mb-6 bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl flex justify-center items-center shadow-sm">
+        <div class="text-base text-blue-100 font-bold tracking-wide">
+            🎧 ¡Escucha este podcast y atento a la pregunta final para la clase de mañana!
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VISTA 1: TIMELINE (EDICIÓN EN LOGIC PRO) 
+    =========================================== -->
+    <div id="timeline-view" class="max-w-6xl mx-auto timeline-container mb-20 relative overflow-x-auto pb-4">
+        <div class="bg-logicDark border-r-2 border-black"></div>
+        <div class="time-ruler min-w-[2500px]">
+            <div class="time-mark" style="left: 0px;">0:00</div>
+            <div class="time-mark" style="left: 150px;">0:15</div>
+            <div class="time-mark" style="left: 300px;">0:30</div>
+            <div class="time-mark" style="left: 450px;">0:45</div>
+            <div class="time-mark" style="left: 600px;">1:00</div>
+            <div class="time-mark" style="left: 750px;">1:15</div>
+            <div class="time-mark" style="left: 900px;">1:30</div>
+            <div class="time-mark" style="left: 1050px;">1:45</div>
+            <div class="time-mark" style="left: 1200px;">2:00</div>
+            <div class="time-mark" style="left: 1350px;">2:15</div>
+            <div class="time-mark" style="left: 1500px;">2:30</div>
+            <div class="time-mark" style="left: 1650px;">2:45</div>
+            <div class="time-mark" style="left: 1800px;">3:00</div>
+            <div class="time-mark" style="left: 1950px;">3:15</div>
+            <div class="time-mark" style="left: 2100px;">3:30</div>
+            <div class="time-mark" style="left: 2250px;">3:45</div>
+            <div class="time-mark" style="left: 2400px;">4:00</div>
+        </div>
+
+        <!-- PISTA 1: SFX -->
+        <div class="track-header sfx">
+            <div class="font-bold text-gray-200">Pista 1</div>
+            <div class="text-xs text-gray-500 font-semibold mt-1">SFX / música</div>
+        </div>
+        <div class="track-lane min-w-[2500px]">
+            <div class="clip sfx" style="left: 0px; width: 150px;">
+                <div class="clip-header"><span>[BED] Sintonía intro</span></div>
+                Sintonía electrónica/científica dinámica. Entra fuerte y baja a volumen de fondo.
+            </div>
+            <div class="clip sfx" style="left: 350px; width: 60px;">
+                <div class="clip-header"><span>[SFX] Geiger</span></div>
+                *Sonido de contador Geiger (crepitación rápida).*
+            </div>
+            <div class="clip sfx" style="left: 850px; width: 50px;">
+                <div class="clip-header"><span>[SFX] Descubrimiento</span></div>
+                *Swoosh o sonido de descubrimiento.*
+            </div>
+            <div class="clip sfx" style="left: 1450px; width: 50px;">
+                <div class="clip-header"><span>[SFX] Transición</span></div>
+                *Efecto de transición cósmica o rayo.*
+            </div>
+            <div class="clip sfx" style="left: 2250px; width: 200px;">
+                <div class="clip-header"><span>[BED] Outro</span></div>
+                Vuelve a subir la sintonía principal a primer plano.
+            </div>
+        </div>
+
+        <!-- PISTA 2: XANTI -->
+        <div class="track-header xanti">
+            <div class="font-bold text-white">Pista 2</div>
+            <div class="text-xs text-blue-300 font-semibold mt-1">Prof. Xanti</div>
+        </div>
+        <div class="track-lane min-w-[2500px]">
+            <div class="clip xanti" style="left: 40px; width: 280px;">
+                <div class="clip-header"><span>Intro</span></div>
+                ¡Hola, futuros científicos! Bienvenidos a una nueva píldora de Flipped learning. Soy Xanti, y hoy vamos a desmontar uno de los mayores mitos de la ciencia moderna. Cuando digo la palabra "radiactividad"... ¿qué es lo primero que os viene a la cabeza? ¿Homer Simpson, residuos verdes fosforitos, o tal vez superpoderes?
+            </div>
+            <div class="clip xanti" style="left: 410px; width: 250px;">
+                <div class="clip-header"><span>Isótopos</span></div>
+                ¡Exacto! Y sin embargo... tú, Leo, y todos los que nos escuchan, sois ligeramente radiactivos ahora mismo. Sí, sí. La radiactividad no es un líquido verde. Es un fenómeno natural donde átomos inestables, que llamamos isótopos, sueltan energía para intentar estabilizarse.
+            </div>
+            <div class="clip xanti" style="left: 700px; width: 140px;">
+                <div class="clip-header"><span>Plátanos</span></div>
+                Y la encontramos en cosas cotidianas. Por ejemplo... ¿te gustan los plátanos?
+            </div>
+            <div class="clip xanti" style="left: 920px; width: 200px;">
+                <div class="clip-header"><span>Dosis</span></div>
+                Tranquilo, tendrías que comerte millones de plátanos de golpe para que fuera peligroso. El potasio-40 que contienen emite dosis inofensivas. Esa es la clave: la radiactividad está en todas partes, lo importante es la cantidad y el tipo.
+            </div>
+            <div class="clip xanti" style="left: 1380px; width: 140px;">
+                <div class="clip-header"><span>Alfa, beta y gamma</span></div>
+                Exacto. Y no todas las radiaciones son iguales. Tenemos principalmente tres tipos de emisones: radiación alfa, beta y gamma.
+            </div>
+            <div class="clip xanti" style="left: 1720px; width: 200px;">
+                <div class="clip-header"><span>Hulk y plomo</span></div>
+                Jaja, me temo que en la vida real los rayos gamma no te ponen verde ni musculoso, Leo. Son pura energía penetrante y peligrosa si no nos protegemos. Por eso, en los hospitales usan gruesos muros y materiales especiales.
+            </div>
+            <div class="clip xanti" style="left: 1980px; width: 260px;">
+                <div class="clip-header"><span>Carbono 14 y reto</span></div>
+                ¡Justo! El plomo frena la radiación. Pero oye, que es súper útil. Gracias a isótopos radiactivos naturales como el carbono-14, los arqueólogos pueden saber la edad exacta de una momia egipcia o un dinosaurio. Bueno, chicos, vuestra misión para la próxima clase: investigad en casa un objeto o tecnología que use radiactividad para funcionar. Lo debatiremos en el laboratorio.
+            </div>
+            <div class="clip xanti" style="left: 2300px; width: 100px;">
+                <div class="clip-header"><span>Outro</span></div>
+                ¡Un saludo, y que la ciencia os acompañe!
+            </div>
+        </div>
+
+        <!-- PISTA 3: LEO (IA) -->
+        <div class="track-header leo">
+            <div class="font-bold text-white">Pista 3</div>
+            <div class="text-xs text-orange-300 font-semibold mt-1">Leo (voz IA)</div>
+        </div>
+        <div class="track-lane min-w-[2500px]">
+            <div class="clip leo" style="left: 330px; width: 70px;">
+                <div class="clip-header"><span>Leo 1</span></div>
+                ¡Yo me imagino Chernobyl, profe! Peligro inminente.
+            </div>
+            <div class="clip leo" style="left: 670px; width: 20px;">
+                <div class="clip-header"><span>Leo 2</span></div>
+                ¡¿Qué?!
+            </div>
+            <div class="clip leo" style="left: 850px; width: 60px;">
+                <div class="clip-header"><span>Leo 3</span></div>
+                Sí, bastante... Espera, ¿me vas a decir que los plátanos son radiactivos?
+            </div>
+            <div class="clip leo" style="left: 1300px; width: 70px;">
+                <div class="clip-header"><span>Leo 4</span></div>
+                O sea, que el problema no es la radiactividad en sí, sino descontrolarla.
+            </div>
+            <div class="clip leo" style="left: 1650px; width: 60px;">
+                <div class="clip-header"><span>Leo 5</span></div>
+                ¡Ala! ¿Los rayos gamma? ¿Como los que crearon a Hulk?
+            </div>
+            <div class="clip leo" style="left: 1930px; width: 45px;">
+                <div class="clip-header"><span>Leo 6</span></div>
+                ¡Ah! Por eso el dentista me pone un chaleco súper pesado cuando me hace una radiografía.
+            </div>
+        </div>
+
+        <!-- PISTA 4: IA -->
+        <div class="track-header ia">
+            <div class="font-bold text-white">Pista 4</div>
+            <div class="text-xs text-green-300 font-semibold mt-1">Siri / datos</div>
+        </div>
+        <div class="track-lane min-w-[2500px]">
+            <div class="clip ia" style="left: 100px; width: 50px;">
+                <div class="clip-header"><span>Intro IA</span></div>
+                *(Voz lejana)* Peligro biológico...
+            </div>
+            <div class="clip ia" style="left: 1150px; width: 140px;">
+                <div class="clip-header"><span>IA datos 1</span></div>
+                Dato: la dosis equivalente al plátano, o BED por sus siglas en inglés, es una unidad informal usada por los científicos para medir niveles de radiación bajos y cotidianos.
+            </div>
+            <div class="clip ia" style="left: 1530px; width: 110px;">
+                <div class="clip-header"><span>IA datos 2</span></div>
+                Información técnica: la radiación alfa puede detenerse con una simple hoja de papel. La radiación gamma, en cambio, requiere bloques de hormigón o gruesos muros de plomo.
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==========================================
+         VISTA 2: TELEPROMPTER (MODO LECTURA)
+    =========================================== -->
+    <div id="script-view" class="hidden max-w-4xl mx-auto mb-20 bg-[#1a1a20] p-10 rounded-2xl border border-gray-700 shadow-2xl space-y-4">
+        
+        <h2 class="text-2xl font-bold text-white border-b border-gray-700 pb-4 mb-6"><i class="fa-solid fa-list text-purple-500 mr-2"></i> Guion de lectura (orden cronológico)</h2>
+
+        <!-- Bloques del guion -->
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-gray-500 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-play"></i></div>
+            <div class="flex-1 bg-slate-800 p-4 rounded-xl border-l-4 border-slate-500">
+                <span class="text-xs font-bold text-slate-400 tracking-widest">[SFX / música]</span>
+                <p class="text-slate-200 mt-1 italic">Sintonía electrónica/científica dinámica. Entra fuerte y baja a volumen de fondo para acompañar la voz.</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-blue-400 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-microphone"></i></div>
+            <div class="flex-1 bg-blue-900/30 p-5 rounded-xl border-l-4 border-blue-500 shadow-md">
+                <span class="text-xs font-bold text-blue-400 tracking-widest">Prof. Xanti</span>
+                <p class="text-blue-50 mt-2 text-xl leading-relaxed">¡Hola, futuros científicos! Bienvenidos a una nueva píldora de Flipped learning. Soy Xanti, y hoy vamos a desmontar uno de los mayores mitos de la ciencia moderna. Cuando digo la palabra "radiactividad"... ¿qué es lo primero que os viene a la cabeza? ¿Homer Simpson, residuos verdes fosforitos, o tal vez superpoderes?</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-green-500 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-robot"></i></div>
+            <div class="flex-1 bg-green-900/20 p-4 rounded-xl border-l-4 border-green-500">
+                <span class="text-xs font-bold text-green-500 tracking-widest">Siri / IA</span>
+                <p class="text-green-100 mt-1 italic">(Voz de fondo procesada): Peligro biológico...</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-orange-400 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-user"></i></div>
+            <div class="flex-1 bg-orange-900/20 p-4 rounded-xl border-l-4 border-orange-500">
+                <span class="text-xs font-bold text-orange-400 tracking-widest">Leo (alumno)</span>
+                <p class="text-orange-100 mt-1 text-lg">¡Yo me imagino Chernobyl, profe! Peligro inminente.</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-gray-500 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-music"></i></div>
+            <div class="flex-1 bg-slate-800 p-4 rounded-xl border-l-4 border-slate-500">
+                <span class="text-xs font-bold text-slate-400 tracking-widest">[SFX]</span>
+                <p class="text-slate-200 mt-1 italic">Sonido clásico de contador Geiger (crepitación rápida).</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-blue-400 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-microphone"></i></div>
+            <div class="flex-1 bg-blue-900/30 p-5 rounded-xl border-l-4 border-blue-500 shadow-md">
+                <span class="text-xs font-bold text-blue-400 tracking-widest">Prof. Xanti</span>
+                <p class="text-blue-50 mt-2 text-xl leading-relaxed">¡Exacto! Y sin embargo... tú, Leo, y todos los que nos escuchan, sois ligeramente radiactivos ahora mismo. Sí, sí. La radiactividad no es un líquido verde. Es un fenómeno natural donde átomos inestables, que llamamos isótopos, sueltan energía para intentar estabilizarse.</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-orange-400 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-user"></i></div>
+            <div class="flex-1 bg-orange-900/20 p-4 rounded-xl border-l-4 border-orange-500">
+                <span class="text-xs font-bold text-orange-400 tracking-widest">Leo (alumno)</span>
+                <p class="text-orange-100 mt-1 text-lg">¡¿Qué?!</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-blue-400 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-microphone"></i></div>
+            <div class="flex-1 bg-blue-900/30 p-5 rounded-xl border-l-4 border-blue-500 shadow-md">
+                <span class="text-xs font-bold text-blue-400 tracking-widest">Prof. Xanti</span>
+                <p class="text-blue-50 mt-2 text-xl leading-relaxed">Y la encontramos en cosas cotidianas. Por ejemplo... ¿te gustan los plátanos?</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-gray-500 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-music"></i></div>
+            <div class="flex-1 bg-slate-800 p-4 rounded-xl border-l-4 border-slate-500">
+                <span class="text-xs font-bold text-slate-400 tracking-widest">[SFX]</span>
+                <p class="text-slate-200 mt-1 italic">Swoosh o sonido de descubrimiento brillante.</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-orange-400 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-user"></i></div>
+            <div class="flex-1 bg-orange-900/20 p-4 rounded-xl border-l-4 border-orange-500">
+                <span class="text-xs font-bold text-orange-400 tracking-widest">Leo (alumno)</span>
+                <p class="text-orange-100 mt-1 text-lg">Sí, bastante... Espera, ¿me vas a decir que los plátanos son radiactivos?</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-blue-400 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-microphone"></i></div>
+            <div class="flex-1 bg-blue-900/30 p-5 rounded-xl border-l-4 border-blue-500 shadow-md">
+                <span class="text-xs font-bold text-blue-400 tracking-widest">Prof. Xanti</span>
+                <p class="text-blue-50 mt-2 text-xl leading-relaxed">Tranquilo, tendrías que comerte millones de plátanos de golpe para que fuera peligroso. El potasio-40 que contienen emite dosis inofensivas. Esa es la clave: la radiactividad está en todas partes, lo importante es la cantidad y el tipo.</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-green-500 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-robot"></i></div>
+            <div class="flex-1 bg-green-900/20 p-4 rounded-xl border-l-4 border-green-500">
+                <span class="text-xs font-bold text-green-500 tracking-widest">Siri / datos</span>
+                <p class="text-green-100 mt-1 text-lg">Dato: la dosis equivalente al plátano, o BED por sus siglas en inglés, es una unidad informal usada por los científicos para medir niveles de radiación bajos y cotidianos.</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-orange-400 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-user"></i></div>
+            <div class="flex-1 bg-orange-900/20 p-4 rounded-xl border-l-4 border-orange-500">
+                <span class="text-xs font-bold text-orange-400 tracking-widest">Leo (alumno)</span>
+                <p class="text-orange-100 mt-1 text-lg">O sea, que el problema no es la radiactividad en sí, sino descontrolarla.</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-blue-400 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-microphone"></i></div>
+            <div class="flex-1 bg-blue-900/30 p-5 rounded-xl border-l-4 border-blue-500 shadow-md">
+                <span class="text-xs font-bold text-blue-400 tracking-widest">Prof. Xanti</span>
+                <p class="text-blue-50 mt-2 text-xl leading-relaxed">Exacto. Y no todas las radiaciones son iguales. Tenemos principalmente tres tipos de emisones: radiación alfa, beta y gamma.</p>
+            </div>
+        </div>
+        
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-gray-500 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-music"></i></div>
+            <div class="flex-1 bg-slate-800 p-4 rounded-xl border-l-4 border-slate-500">
+                <span class="text-xs font-bold text-slate-400 tracking-widest">[SFX]</span>
+                <p class="text-slate-200 mt-1 italic">Efecto de transición cósmica o rayo de energía.</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-green-500 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-robot"></i></div>
+            <div class="flex-1 bg-green-900/20 p-4 rounded-xl border-l-4 border-green-500">
+                <span class="text-xs font-bold text-green-500 tracking-widest">Siri / datos</span>
+                <p class="text-green-100 mt-1 text-lg">Información técnica: la radiación alfa puede detenerse con una simple hoja de papel. La radiación gamma, en cambio, requiere bloques de hormigón o gruesos muros de plomo.</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-orange-400 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-user"></i></div>
+            <div class="flex-1 bg-orange-900/20 p-4 rounded-xl border-l-4 border-orange-500">
+                <span class="text-xs font-bold text-orange-400 tracking-widest">Leo (alumno)</span>
+                <p class="text-orange-100 mt-1 text-lg">¡Ala! ¿Los rayos gamma? ¿Como los que crearon a Hulk?</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-blue-400 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-microphone"></i></div>
+            <div class="flex-1 bg-blue-900/30 p-5 rounded-xl border-l-4 border-blue-500 shadow-md">
+                <span class="text-xs font-bold text-blue-400 tracking-widest">Prof. Xanti</span>
+                <p class="text-blue-50 mt-2 text-xl leading-relaxed">Jaja, me temo que en la vida real los rayos gamma no te ponen verde ni musculoso, Leo. Son pura energía penetrante y peligrosa si no nos protegemos. Por eso, en los hospitales usan gruesos muros y materiales especiales.</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-orange-400 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-user"></i></div>
+            <div class="flex-1 bg-orange-900/20 p-4 rounded-xl border-l-4 border-orange-500">
+                <span class="text-xs font-bold text-orange-400 tracking-widest">Leo (alumno)</span>
+                <p class="text-orange-100 mt-1 text-lg">¡Ah! Por eso el dentista me pone un chaleco súper pesado cuando me hace una radiografía.</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-blue-400 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-microphone"></i></div>
+            <div class="flex-1 bg-blue-900/30 p-5 rounded-xl border-l-4 border-blue-500 shadow-md">
+                <span class="text-xs font-bold text-blue-400 tracking-widest">Prof. Xanti</span>
+                <p class="text-blue-50 mt-2 text-xl leading-relaxed">¡Justo! El plomo frena la radiación. Pero oye, que es súper útil. Gracias a isótopos radiactivos naturales como el carbono-14, los arqueólogos pueden saber la edad exacta de una momia egipcia o un dinosaurio. Bueno, chicos, vuestra misión para la próxima clase: investigad en casa un objeto o tecnología que use radiactividad para funcionar. Lo debatiremos en el laboratorio.</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-gray-500 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-music"></i></div>
+            <div class="flex-1 bg-slate-800 p-4 rounded-xl border-l-4 border-slate-500">
+                <span class="text-xs font-bold text-slate-400 tracking-widest">[SFX / música]</span>
+                <p class="text-slate-200 mt-1 italic">Sube el volumen de la sintonía principal a primer plano para despedir.</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+            <div class="w-10 text-blue-400 font-bold text-sm mt-3 flex justify-center"><i class="fa-solid fa-microphone"></i></div>
+            <div class="flex-1 bg-blue-900/30 p-5 rounded-xl border-l-4 border-blue-500 shadow-md">
+                <span class="text-xs font-bold text-blue-400 tracking-widest">Prof. Xanti</span>
+                <p class="text-blue-50 mt-2 text-xl leading-relaxed">¡Un saludo, y que la ciencia os acompañe!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE INTERACCIÓN -->
+    <script>
+        function toggleView() {
+            const timelineView = document.getElementById('timeline-view');
+            const scriptView = document.getElementById('script-view');
+            
+            if (timelineView.classList.contains('hidden')) {
+                // Mostrar timeline
+                timelineView.classList.remove('hidden');
+                scriptView.classList.add('hidden');
+            } else {
+                // Mostrar teleprompter (lectura)
+                timelineView.classList.add('hidden');
+                scriptView.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
